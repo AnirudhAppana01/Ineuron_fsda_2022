@@ -1,0 +1,93 @@
+-- TASK1
+CREATE DATABASE SHOPPING;
+USE SHOPPING;
+
+create  or replace table SHOPPING_HISTORY(
+  product varchar(30) not null ,
+  quantity integer not null,
+  unit_price integer not null
+);
+
+select * from SHOPPING_HISTORY;
+
+insert into SHOPPING_HISTORY values
+('milk',3,10),
+('bread',7,3),
+('bread',5,2),
+('maggie',5,10),
+('lase',5,10),
+('pepsi',2,38),
+('lase',2,20),
+('maggie',2,5),
+('oreo',2,10),
+('milk',4,16);
+
+
+
+
+-- SOLUTION
+
+select product,sum(quantity*UNIT_PRICE)as total_price
+from SHOPPING_HISTORY
+group by product
+order by product desc;
+
+--------------------------------------------------------------------------------------------------------------------------
+
+
+
+-- TASK2
+
+
+create database telecom;
+ use telecom;
+
+CREATE TABLE PHONES (
+ NAME VARCHAR(20) NOT NULL UNIQUE,
+ PHONE_NUMBER INTEGER NOT NULL UNIQUE
+);
+
+CREATE TABLE CALLS (
+  ID INTEGER NOT NULL,
+  CALLER  INTEGER NOT NULL,
+  CALLEE INTEGER NOT NULL,
+  DURATION INTEGER NOT NULL,
+  UNIQUE(ID)
+);  
+
+
+insert into PHONES values
+('JACK',1234),
+('LENA',3333),
+('MARK',9999),
+('ANNA',7582)
+
+;
+
+insert into CALLS values
+(25,1234,7582,8),
+(7,9999,7582,1),
+(18,9999,3333,4),
+(2,7582,3333,3),
+(3,3333,1234,1),
+(21,3333,1234,1)
+;
+
+SELECT * FROM PHONES;
+SELECT * FROM CALLS;
+
+
+-- SOLUTION
+
+SELECT NAME FROM(
+SELECT  P.name ,SUM(C.DURATION) AS  DURATION FROM PHONES P  
+LEFT JOIN CALLS C 
+where P.PHONE_NUMBER = C.CALLEE OR P.PHONE_NUMBER = C.CALLER 
+GROUP BY NAME
+ORDER BY NAME )
+WHERE DURATION >=10;
+
+
+
+
+
