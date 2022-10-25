@@ -1,0 +1,455 @@
+
+------------------------------------------  Task -1 🎯Analyzing Road Safety in the UK  ------------------------------------------
+
+
+
+Create DATABASE UK;
+
+USE UK;
+
+
+CREATE  OR REPLACE TABLE accident(
+  Accident_Index VARCHAR(50),
+  Location_Easting_OSGR VARCHAR(50),
+  Location_Northing_OSGR VARCHAR(50),
+  Longitude VARCHAR(50),
+  Latitude VARCHAR(50),
+  Police_Force VARCHAR(50),
+  Accident_Severity VARCHAR(50),
+  Number_of_Vehicles VARCHAR(50),
+  Number_of_Casualties VARCHAR(50),
+  Date VARCHAR(50),
+  Day_of_Week VARCHAR(50),
+  Time VARCHAR(50),
+  Local_Authority_District VARCHAR(50),
+  Local_Authority_Highway VARCHAR(50),
+  firstst_Road_Class VARCHAR(50),
+  firstst_Road_Number VARCHAR(50),
+  Road_Type VARCHAR(50),
+  Speed_limit VARCHAR(50),
+  Junction_Detail VARCHAR(50),
+  Junction_Control VARCHAR(50),
+  secondnd_Road_Class VARCHAR(50), 
+  secondnd_Road_Number VARCHAR(50),
+  Pedestrian_Crossing_Human_Control VARCHAR(50),
+  Pedestrian_Crossing_Physical_Facilities VARCHAR(50),
+  Light_Conditions VARCHAR(50),
+  Weather_Conditions VARCHAR(50),
+  Road_Surface_Conditions VARCHAR(50),
+  Special_Conditions_at_Site VARCHAR(50),
+  Carriageway_Hazards VARCHAR(50),
+  Urban_or_Rural_Area VARCHAR(50),
+  Did_Police_Officer_Attend_Scene_of_Accident VARCHAR(50),
+  LSOA_of_Accident_Location VARCHAR(50)
+   );
+
+
+CREATE TABLE accident_final(
+	accident_index VARCHAR(13),
+    accident_severity INT
+);
+
+CREATE  or replace TABLE vehicles(
+	Accident_Index VARCHAR(50),
+  Vehicle_Reference VARCHAR(50),
+  Vehicle_Type VARCHAR(50),
+  Towing_and_Articulation VARCHAR(50),
+  Vehicle_Manoeuvre VARCHAR(50),
+  Vehicle_Location_Restricted_Lane VARCHAR(50),
+  Junction_Location VARCHAR(50),
+  Skidding_and_Overturning VARCHAR(50),
+  Hit_Object_in_Carriageway VARCHAR(50),
+  Vehicle_Leaving_Carriageway VARCHAR(50),
+  Hit_Object_off_Carriageway VARCHAR(50),
+  FIRSTst_Point_of_Impact VARCHAR(50),
+  Was_Vehicle_Left_Hand_Drive VARCHAR(50),
+  Journey_Purpose_of_Driver VARCHAR(50),
+  Sex_of_Driver VARCHAR(50),
+  Age_of_Driver VARCHAR(50),
+  Age_Band_of_Driver VARCHAR(50),
+  Engine_Capacity_CC VARCHAR(50),
+  Propulsion_Code VARCHAR(50),
+  Age_of_Vehicle VARCHAR(50),
+  Driver_IMD_Decile VARCHAR(50),
+  Driver_Home_Area_Type VARCHAR(50),
+  Vehicle_IMD_Decile VARCHAR(50)
+
+);
+
+
+CREATE TABLE vehicles_final(
+	accident_index VARCHAR(13),
+    vehicle_type VARCHAR(50)
+);
+
+CREATE OR REPLACE TABLE vehicle_types(
+	vehicle_code INT,
+    vehicle_type VARCHAR(100)
+);
+
+select * from vehicle_types;
+
+Create or replace FILE FORMAT CSV_DQ 
+ COMPRESSION = 'AUTO' 
+ FIELD_DELIMITER = ',' 
+ RECORD_DELIMITER = '\n' 
+ SKIP_HEADER = 1
+ FIELD_OPTIONALLY_ENCLOSED_BY = '\042' 
+ TRIM_SPACE = FALSE 
+ ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE
+ ESCAPE = 'NONE' 
+ ESCAPE_UNENCLOSED_FIELD = '\134' 
+ DATE_FORMAT = 'mm/dd/yyyy' 
+ TIMESTAMP_FORMAT = 'AUTO' 
+ NULL_IF = ('NULL', 'null', '\N') 
+ COMMENT = 'parse comma-delimited, double-quoted data';
+ 
+ 
+
+
+
+Insert into accident_final (accident_index, accident_severity) 
+  Select accident_index, accident_severity 
+  FROM accident ;
+ 
+Insert into vehicles_final (accident_index, Vehicle_Type) 
+  Select accident_index, Vehicle_Type 
+  FROM vehicles ;
+ select * from vehicles_final;
+ 
+
+
+
+
+/*1.median Severity by various motorcycle*/
+ 
+select C.VEHICLE_TYPE as VEHICLE_TYPE ,
+ median(A.ACCIDENT_SEVERITY) as median_ACCIDENT_SEVERITY
+ FROM accident_final A
+ LEFT  JOIN vehicles_final B
+ ON A.ACCIDENT_INDEX = B.ACCIDENT_INDEX
+ LEFT  JOIN vehicle_types C
+ ON B.Vehicle_Type = C.vehicle_code
+ where  C.VEHICLE_TYPE like '%otorcycle%'
+ group by 1;
+ 
+ 
+ /* 
+OUTPUT:
+
+VEHICLE_TYPE	MEDIAN_ACCIDENT_SEVERITY
+Motorcycle 50cc and under	3.000
+Electric motorcycle	2.000
+Motorcycle 125cc and under	3.000
+Motorcycle - unknown cc	3.000
+Motorcycle over 125cc and up to 500cc	3.000
+Motorcycle over 500cc	3.000
+
+*/
+
+ /* 2 Accident Severity and total accidents per  vehicle type */
+ select C.VEHICLE_TYPE as VEHICLE_TYPE ,
+ A.ACCIDENT_SEVERITY,
+ count(A.ACCIDENT_INDEX) as Total_Accidents 
+ FROM accident_final A
+ LEFT  JOIN vehicles_final B
+ ON A.ACCIDENT_INDEX = B.ACCIDENT_INDEX
+ LEFT  JOIN vehicle_types C
+ ON B.Vehicle_Type = C.vehicle_code
+ group by 1,2
+ order by 1,2;
+ 
+ /* 
+OUTPUT:
+
+VEHICLE_TYPE	ACCIDENT_SEVERITY	TOTAL_ACCIDENTS
+Agricultural vehicle	1	7
+Agricultural vehicle	2	60
+Agricultural vehicle	3	186
+Bus or coach (17 or more pass seats)	1	37
+Bus or coach (17 or more pass seats)	2	376
+Bus or coach (17 or more pass seats)	3	3172
+Car	1	862
+Car	2	10724
+Car	3	91111
+Data missing or out of range	2	1
+Data missing or out of range	3	3
+Electric motorcycle	2	2
+Goods 7.5 tonnes mgw and over	1	135
+Goods 7.5 tonnes mgw and over	2	371
+Goods 7.5 tonnes mgw and over	3	2094
+Goods over 3.5t. and under 7.5t	1	22
+Goods over 3.5t. and under 7.5t	2	112
+Goods over 3.5t. and under 7.5t	3	758
+Goods vehicle - unknown weight	1	1
+Goods vehicle - unknown weight	2	18
+Goods vehicle - unknown weight	3	137
+Minibus (8 - 16 passenger seats)	1	2
+Minibus (8 - 16 passenger seats)	2	37
+Minibus (8 - 16 passenger seats)	3	229
+Mobility scooter	1	2
+Mobility scooter	2	20
+Mobility scooter	3	66
+Motorcycle - unknown cc	1	1
+Motorcycle - unknown cc	2	23
+Motorcycle - unknown cc	3	73
+Motorcycle 125cc and under	1	43
+Motorcycle 125cc and under	2	1087
+Motorcycle 125cc and under	3	5195
+Motorcycle 50cc and under	1	4
+Motorcycle 50cc and under	2	195
+Motorcycle 50cc and under	3	1113
+Motorcycle over 125cc and up to 500cc	1	14
+Motorcycle over 125cc and up to 500cc	2	306
+Motorcycle over 125cc and up to 500cc	3	956
+Motorcycle over 500cc	1	128
+Motorcycle over 500cc	2	1225
+Motorcycle over 500cc	3	2657
+Other vehicle	1	23
+Other vehicle	2	117
+Other vehicle	3	532
+Pedal cycle	1	54
+Pedal cycle	2	1777
+Pedal cycle	3	9468
+Ridden horse	2	8
+Ridden horse	3	39
+Taxi/Private hire car	1	25
+Taxi/Private hire car	2	351
+Taxi/Private hire car	3	3488
+Tram	2	2
+Tram	3	15
+Van / Goods 3.5 tonnes mgw or under	1	81
+Van / Goods 3.5 tonnes mgw or under	2	899
+Van / Goods 3.5 tonnes mgw or under	3	6991
+
+*/
+ 
+ /* 3.a) Average Severity by vehicle type */
+ 
+  
+ select C.VEHICLE_TYPE as VEHICLE_TYPE ,
+ avg(A.ACCIDENT_SEVERITY) as avg_ACCIDENT_SEVERITY
+ FROM accident_final A
+ LEFT  JOIN vehicles_final B
+ ON A.ACCIDENT_INDEX = B.ACCIDENT_INDEX
+ LEFT  JOIN vehicle_types C
+ ON B.Vehicle_Type = C.vehicle_code
+ group by 1;
+ 
+ 
+ /* 
+OUTPUT:
+
+VEHICLE_TYPE	AVG_ACCIDENT_SEVERITY
+Car	2.878789
+Goods over 3.5t. and under 7.5t	2.825112
+Pedal cycle	2.833171
+Motorcycle 125cc and under	2.814545
+Taxi/Private hire car	2.896222
+Bus or coach (17 or more pass seats)	2.874477
+Minibus (8 - 16 passenger seats)	2.847015
+Van / Goods 3.5 tonnes mgw or under	2.866892
+Tram	2.882353
+Other vehicle	2.757440
+Goods 7.5 tonnes mgw and over	2.753462
+Motorcycle over 125cc and up to 500cc	2.738245
+Agricultural vehicle	2.707510
+Goods vehicle - unknown weight	2.871795
+Ridden horse	2.829787
+Data missing or out of range	2.750000
+Motorcycle over 500cc	2.630673
+Mobility scooter	2.727273
+Electric motorcycle	2.000000
+Motorcycle 50cc and under	2.845274
+Motorcycle - unknown cc	2.742268
+
+*/
+ 
+ /* 3.b) Average Severity by vehicle type where all catogeries of motor cycles as motorcycle */
+ 
+ 
+ select VEHICLE_TYPE, avg(all ACCIDENT_SEVERITY)  as avg_ACCIDENT_SEVERITY
+ from(
+ select A.ACCIDENT_INDEX ,
+ A.ACCIDENT_SEVERITY,
+ CASE WHEN C.VEHICLE_TYPE  IN( 'Motorcycle 125cc and under','Motorcycle over 125cc and up to 500cc','Motorcycle over 500cc','Motorcycle 50cc and under','Motorcycle - unknown cc','Electric motorcycle') THEN 'Motorcycle'
+ ELSE C.VEHICLE_TYPE  END AS VEHICLE_TYPE
+ FROM accident_final A
+ LEFT  JOIN vehicles_final B
+ ON A.ACCIDENT_INDEX = B.ACCIDENT_INDEX
+ LEFT  JOIN vehicle_types C
+ ON B.Vehicle_Type = C.vehicle_code
+ ) 
+group by VEHICLE_TYPE 
+ ;
+ 
+ /* 
+OUTPUT:
+
+VEHICLE_TYPE	AVG_ACCIDENT_SEVERITY
+Car	2.878789
+Goods over 3.5t. and under 7.5t	2.825112
+Pedal cycle	2.833171
+Motorcycle	2.752880
+Taxi/Private hire car	2.896222
+Bus or coach (17 or more pass seats)	2.874477
+Minibus (8 - 16 passenger seats)	2.847015
+Van / Goods 3.5 tonnes mgw or under	2.866892
+Tram	2.882353
+Other vehicle	2.757440
+Goods 7.5 tonnes mgw and over	2.753462
+Agricultural vehicle	2.707510
+Goods vehicle - unknown weight	2.871795
+Ridden horse	2.829787
+Data missing or out of range	2.750000
+Mobility scooter	2.727273
+
+*/
+ /* 4.a) Average Severity and Total Accidents by only Motorcyle where all catogeries of motor cycles as motorcycle */
+ select VEHICLE_TYPE, count(ACCIDENT_INDEX) as Total_Accidents, avg(all ACCIDENT_SEVERITY)  as avg_ACCIDENT_SEVERITY
+ from(
+ select A.ACCIDENT_INDEX ,
+ A.ACCIDENT_SEVERITY,
+ CASE WHEN C.VEHICLE_TYPE  IN( 'Motorcycle 125cc and under','Motorcycle over 125cc and up to 500cc','Motorcycle over 500cc','Motorcycle 50cc and under','Motorcycle - unknown cc','Electric motorcycle') THEN 'Motorcycle'
+ ELSE C.VEHICLE_TYPE  END AS VEHICLE_TYPE
+ FROM accident_final A
+ LEFT  JOIN vehicles_final B
+ ON A.ACCIDENT_INDEX = B.ACCIDENT_INDEX
+ LEFT  JOIN vehicle_types C
+ ON B.Vehicle_Type = C.vehicle_code
+ ) 
+where VEHICLE_TYPE = 'Motorcycle'
+group by VEHICLE_TYPE 
+ ;
+ 
+
+/* 
+OUTPUT:
+
+VEHICLE_TYPE	TOTAL_ACCIDENTS	AVG_ACCIDENT_SEVERITY
+Motorcycle	13022	2.752880
+
+*/
+/*4. b ) Average Severity and Total Accidents by Motorcyle  for all motorcycles classes as sperate catogeries */
+
+select C.VEHICLE_TYPE as VEHICLE_TYPE ,
+count(A.ACCIDENT_INDEX) as Total_Accidents ,
+ avg(A.ACCIDENT_SEVERITY) as avg_ACCIDENT_SEVERITY
+ FROM accident_final A
+ LEFT  JOIN vehicles_final B
+ ON A.ACCIDENT_INDEX = B.ACCIDENT_INDEX
+ LEFT  JOIN vehicle_types C
+ ON B.Vehicle_Type = C.vehicle_code
+ where  C.VEHICLE_TYPE like '%otorcycle%'
+ group by 1;
+ 
+ 
+/* 
+OUTPUT:
+
+VEHICLE_TYPE	TOTAL_ACCIDENTS	AVG_ACCIDENT_SEVERITY
+Motorcycle 125cc and under	6325	2.814545
+Motorcycle over 500cc	4010	2.630673
+Motorcycle over 125cc and up to 500cc	1276	2.738245
+Motorcycle 50cc and under	1312	2.845274
+Motorcycle - unknown cc	97	2.742268
+Electric motorcycle	2	2.000000
+
+*/ 
+ 
+
+ 
+
+
+
+
+
+
+
+
+
+
+------------------------------------------  Task - 2 🎯Analyzing the World Population  ------------------------------------------
+
+
+
+CREATE or replace TABLE POPULATION(
+  country VARCHAR(50),
+  area int ,
+  birth_rate float,
+  death_rate float,
+  infant_mortality_rate float,
+  internet_users int,
+  life_exp_at_birth float,
+  maternal_mortality_rate int,
+  net_migration_rate float,
+  population int,
+  population_growth_rate float
+
+)
+;
+
+----------------1. Which country has the highest population?----------------
+
+SELECT COUNTRY, POPULATION  FROM POPULATION
+WHERE POPULATION IS NOT NULL
+ORDER BY 2 DESC
+LIMIT 1
+;
+
+/* 
+OUTPUT:
+
+COUNTRY	POPULATION
+China	1355692576
+*/
+----------------2. Which country has the least number of people?----------------
+SELECT COUNTRY, POPULATION FROM POPULATION
+WHERE POPULATION IS NOT NULL
+ORDER BY 2 
+LIMIT 1
+;
+
+/* 
+OUTPUT:
+
+COUNTRY	POPULATION
+Pitcairn Islands	48
+*/
+
+----------------3. Which country is witnessing the highest population growth?----------------
+SELECT COUNTRY,POPULATION_GROWTH_RATE FROM POPULATION
+WHERE POPULATION_GROWTH_RATE = (SELECT MAX(POPULATION_GROWTH_RATE) FROM POPULATION);
+/* 
+OUTPUT:
+
+COUNTRY	POPULATION_GROWTH_RATE
+Lebanon	9.37
+*/
+----------------4. Which country has an extraordinary number for the population?----------------
+
+SELECT COUNTRY, POPULATION  FROM POPULATION
+WHERE POPULATION IS NOT NULL
+ORDER BY 2 DESC
+LIMIT 1
+;
+
+/* 
+OUTPUT:
+
+COUNTRY	POPULATION
+China	1355692576
+
+*/
+
+----------------5. Which is the most densely populated country in the world?----------------
+
+SELECT *, (AREA / POPULATION)AS DENS FROM POPULATION
+WHERE DENS = (SELECT MAX(AREA/POPULATION) FROM POPULATION);
+
+/* 
+
+OUTPUT:
+
+COUNTRY	AREA	BIRTH_RATE	DEATH_RATE	INFANT_MORTALITY_RATE	INTERNET_USERS	LIFE_EXP_AT_BIRTH	MATERNAL_MORTALITY_RATE	NET_MIGRATION_RATE	POPULATION	POPULATION_GROWTH_RATE	DENS
+Greenland	2166086	14.53	8.38	9.42	36000	71.82		-5.98	57728	0.02	37.522277 */
